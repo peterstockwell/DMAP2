@@ -1,0 +1,34 @@
+# sample_params.sh: parameters to descibe a single bisulphite
+# sequence sample, including the raw fastq file(s) and any
+# trimming that might be justified by the read qualities.
+
+# identify if this was RRBS or WGBS: this determines a number
+# of downstream operations, including adaptor trimming and
+# differential methylation calculations.  Values are RRBS or WGBS.
+
+dmap_run_type="RRBS";
+# dmap_run_type="WGBS";
+
+# name of adaptor-trimmed output dir:
+
+adtrimmed_out_dir="./";
+
+# array of sample file name(s): we usually only map read 1, so
+# read 2 name would be omitted.
+
+
+dmap_sample_files=(
+"NC-P-20_1.fastq"
+)
+
+# hard trim length, leave 0 for no hard trimming.
+
+dmap_sample_trim_length=0;
+
+# minimum read length for retention: usually set this to 20
+
+dmap_min_read_length=20;
+
+# mapping output directory
+
+bismark_out_dir="bismark_out/";
