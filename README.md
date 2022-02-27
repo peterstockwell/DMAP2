@@ -20,6 +20,13 @@ features with the DMAP program identgeneloc
 DMAP2 organises these steps with a series of bash scripts using bash
 variables to control the analysis.
 
+If prior work has already performed some steps (genome preparation,
+mapping) then those can be omitted and appropriate information put in
+the basic parameter file.  While the mapping scripts are based on
+using the bismark bisulphite aligner, other aligners can be used
+(e.g. bsmap) in which case they can be processed from the diffmeth
+point at step (d).
+
 Platforms: both DMAP and DMAP2 have been developed and tested in MacOS
 X and RH Linux environments.  DMAP is written in C and should compile
 under any typical Linux/Unix systems, while DMAP2 should operate with
