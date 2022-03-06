@@ -152,6 +152,11 @@ if [[ $dm_chr_id_has_chr != $annot_chr_id_has_chr ]]; then
 
   revised_input_file="${genloc_input_file}"".revised";
 
+  if [[ $verbose == "yes" ]]; then
+    printf "They don't: revising input file '%s' to '%s'\n" "${genloc_input_file}" "${revised_input_file}";
+  fi
+  
+
   if [[ $annot_chr_id_has_chr == "yes" ]]; then
 
     awk '$1~/#/{print $0;}$1!~/#/{printf("chr%s\n",$0);}' "${genloc_input_file}" > "${revised_input_file}";
