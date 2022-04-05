@@ -1,7 +1,7 @@
 # map_bisulphite_reads.sh: script to adaptor trim one bisulphite
 # sample and run the bismark aligner on it.
 #
-# Peter Stockwell: Aug-2021
+# Peter Stockwell: 6-Apr-2022
 
 
 # needs a basic parameter file to specify positions of relevant
@@ -535,5 +535,50 @@ if [[ $verbose == "yes" ]]; then
 fi
 
 /bin/bash "${bismark_cmd_file}"
+
+# if verbose, then run check on mapping stats:
+
+if [[ $verbose == "yes" ]]; then
+
+# make the awk script
+
+cat << 'BISMARKSTATS.AWK'  > bismark_stats.awk
+# bismark_stats.awk: to retrieve information from bismark mapping reports
+#
+
+BEGIN{printf("File(s)\tTotalReads\tUniqReads\tMapping\tCpGmeth\tCHGmeth\tCHHmeth\n");}
+
+$0~/Bismark report for:/&&$0!~/ and /{printf("%s\t",$4);}
+
+$0~/Bismark report for:/&&$0~/ and /{printf("%s&%s\t",$4,$6);}
+
+$0~/Sequences analysed in total:/||$0~/Sequence pairs analysed in total:/{printf("%s\t",$NF);}
+
+$0~/Number of alignments with a unique/||$0~/Number of paired-end alignments with a unique/{printf("%s\t",$NF);}
+
+$0~/Mapping efficiency:/{printf("%s\t",$NF);}
+
+$0~/C methylated in CpG context:/{printf("%s\t",$NF);}
+
+$0~/C methylated in CHG context:/{printf("%s\t",$NF);}
+
+$0~/C methylated in CHH context:/{printf("%s\n",$NF);}
+BISMARKSTATS.AWK
+
+if [[ ${#dmap_sample_files[@]} -gt 1 ]]; then
+
+report_file_name="${adtrimmed_out_dir}""$(basename "${dmap_sample_files[0]}" "${read_trailer[0]}")""_at_bismark_bt2_PE_report.txt";
+
+else
+
+report_file_name="${adtrimmed_out_dir}""$(basename "${dmap_sample_files[0]}" "${read_trailer[0]}")""_at_bismark_bt2_SE_report.txt";
+
+fi
+
+# generate the report
+
+awk -f bismark_stats.awk "${report_file_name}"
+
+fi
 
 exit 0;
