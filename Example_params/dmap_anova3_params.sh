@@ -105,3 +105,10 @@ map_init_CpG_to_prev="yes";
 # defaults to 150bp, for 0
 
 #max_sam_read_length=150;
+
+# Vertebrate C methylation is largely confined to CpG dinucleotides,
+# invertebrates and plants less so, so an option is needed for non_CpG methylation
+# to be enabled.
+
+non_CpG_methylation="";
+
