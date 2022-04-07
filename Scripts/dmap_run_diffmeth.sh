@@ -126,6 +126,14 @@ diffmeth_run_options="${diffmeth_run_options}"" -t ""${min_cpg_hits}";
 
 fi
 
+# nonCpG methylaton??
+
+if [[ $non_CpG_methylation == "yes" ]]; then
+
+diffmeth_run_options=${diffmeth_run_options}" -J ";
+
+fi
+
 # min_sample_count is not wanted for pairwise or listing options
 
 case $diffmeth_run_type in
