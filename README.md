@@ -77,6 +77,12 @@ dmap_binlist_params.sh - list methylation counts for a single sample
                      for each fragment or bin
 genloc_params.sh - parameters for identgeneloc to relate
                      fragments/regions to genomic features
+
+And parameter files for SRA examples:
+
+srr18283145_sample_params.sh		- mapping parameters for SRR18283145.
+srr_145_146_diffmeth_pairwise.sh	- parameters for pairwise diffmeth run.
+srr_145_146_genloc_params.sh		- parameters for identgeneloc on diffmeth output
 ```
 The Extra_scripts directory contains:
 ```

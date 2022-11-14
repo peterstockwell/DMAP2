@@ -1,7 +1,7 @@
 # map_bisulphite_reads.sh: script to adaptor trim one bisulphite
 # sample and run the bismark aligner on it.
 #
-# Peter Stockwell: 6-Apr-2022
+# Peter Stockwell: Aug-2022
 
 
 # needs a basic parameter file to specify positions of relevant
@@ -60,8 +60,20 @@ if [[ $verbose == "yes" ]]; then
 printf "                DMAP\n";
 printf " Differential Methylation Analysis Package\n";
 printf "Adaptor trimmming and Mapping sequence reads\n\n";
+printf "\n  Working in dir: '%s'\n" "$PWD";
 printf "  Basic parameters from '%s'\n" "$1";
 printf "  Sample parameters from '%s'\n" "$2";
+case $bisulphite_mapper in
+
+  bismark)
+  printf "   Bismark mapping\n";
+  ;;
+
+  bsmapz)
+  printf "   BSMAPz mapping\n";
+  ;;
+
+esac
 
 fi
 
@@ -516,25 +528,29 @@ fi
 
 eval "${trim_command}";
 
+# check the mapping output dir exists
+
+mkdir -p "${mapping_out_dir}";
+
+case $bisulphite_mapper in
+
+  bismark)
+
 # we need to run bismark on the adaptor trimmed file(s)
-
-# check the bismark output dir exists
-
-mkdir -p "${bismark_out_dir}";
 
 # create 'unique' name for bismark command file:
 
-bismark_cmd_file="${adtrimmed_out_dir}""$(basename "${dmap_sample_files[0]}" "${read_trailer[0]}")""_bismark_cmd.sh";
+# bismark_cmd_file="${adtrimmed_out_dir}""$(basename "${dmap_sample_files[0]}" "${read_trailer[0]}")""_bismark_cmd.sh";
 
-printf "%sbismark %s -o %s %s %s %s\n" "${dmap_path_to_bismark_exes}" "${dmap_bismark_index_location}" "${bismark_out_dir}" "${bismark_run_options}" "${bismark_options[0]}" "${bismark_options[1]}" > "${bismark_cmd_file}";
+bismark_cmd="${dmap_path_to_bismark_exes}""bismark ""${dmap_bismark_index_location}"" -o ""${mapping_out_dir}"" ""${bismark_run_options}"" ""${bismark_options[0]}"" ""${bismark_options[1]}";
 
 if [[ $verbose == "yes" ]]; then
 
-    printf "Executing: %sbismark %s -o %s %s %s %s\n" "${dmap_path_to_bismark_exes}" "${dmap_bismark_index_location}" "${bismark_out_dir}" "${bismark_run_options}" "${bismark_options[0]}" "${bismark_options[1]}";
+    printf "Executing: %s\n" "${bismark_cmd}";
 
 fi
 
-/bin/bash "${bismark_cmd_file}"
+eval "${bismark_cmd}";
 
 # if verbose, then run check on mapping stats:
 
@@ -579,6 +595,47 @@ fi
 
 awk -f bismark_stats.awk "${report_file_name}"
 
+printf "bismark mapping completed\n";
+
 fi
+  ;;
+
+  bsmapz)
+
+# generate bsmapz command
+
+  if [[ ${#dmap_sample_files[@]} -gt 1 ]]; then
+    readfile2=" -b ""${read_out_name[1]}";
+  else
+    readfile2="";
+  fi
+
+  if [[ ${#dmap_genome_fasta_files[@]} -gt 1 ]]; then
+# create name for single genome fasta file
+    base_genome_name="$(basename "${dmap_genome_fasta_files[0]}")";
+    whole_genome_filepath="${dmap_genome_dir}""/genome_single/""${base_genome_name%%.*}"".wholegenome.fa";
+  else   # single genome fasta file
+    whole_genome_filepath="${dmap_genome_dir}""$(basename "${dmap_genome_fasta_files[0]}")";
+  fi
+
+# need an output file name:
+
+  bsmapz_out_name="${mapping_out_dir}""${read_out_name[0]}""_bsmapz.bam";
+
+  bsmapz_cmd="${bsmapz_exe}"" ""${bsmapz_run_options}"" -a ""${read_out_name[0]}""${readfile2}"" -d ""${whole_genome_filepath}"" -o ""${bsmapz_out_name}";
+
+  printf "executing %s\n" "${bsmapz_cmd}";
+     
+  eval "${bsmapz_cmd}";
+
+if [[ $verbose == "yes" ]]; then
+
+printf "bsmapz mapping completed\n";
+
+fi
+
+  ;;
+
+esac
 
 exit 0;

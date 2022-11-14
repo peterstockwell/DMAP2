@@ -61,6 +61,7 @@ if [[ $verbose == "yes" ]]; then
 printf "                   DMAP\n";
 printf "    Differential Methylation Analysis Package\n";
 printf "Running gene location on differential methylation data\n\n";
+printf "\n  Working in dir: '%s'\n" "$PWD";
 printf "  Basic parameters from '%s'\n" "$1";
 printf "  Sample parameters from '%s'\n" "$2";
 
@@ -136,6 +137,14 @@ FIND_ANN_ID
 
 ;;
 
+  none)
+# no annotation, just bomb out with message
+
+  printf "'feature_annotation_type' is set to 'none': can't run identgenloc\n";
+  exit 0;
+
+;;
+
 esac
 
 if [[ $annot_chr_id == "chr"* ]]; then
@@ -199,10 +208,19 @@ case ${feature_annotation_type} in
     add_opt_and_value "-Q -G" "${dmap_annot_info_file}";
 ;;
   GFF3)
-    add_opt_and_value "-F -f" "${annotation_file_location}""${annotation_files[@]}";
+    if [[ "${annotation_files[0]##*.}" == "gz" ]]; then
+      add_opt_and_value "-F -f" "${annotation_file_location}""${annotation_files[@]%.*}";
+    else
+      add_opt_and_value "-F -f" "${annotation_file_location}""${annotation_files[@]}";
+    fi
+
 ;;
   GTF)
-    add_opt_and_value "-T -f" "${annotation_file_location}""${annotation_files[@]}";
+    if [[ "${annotation_files[0]##*.}" == "gz" ]]; then
+      add_opt_and_value "-T -f" "${annotation_file_location}""${annotation_files[@]%.*}";
+    else
+      add_opt_and_value "-T -f" "${annotation_file_location}""${annotation_files[@]}";
+    fi
 ;;
 
 esac;
@@ -269,7 +287,7 @@ genloc_run_cmd="${path_to_dmap}""identgeneloc ""${genloc_run_options}";
 
 if [[ $verbose == "yes" ]]; then
 
-  printf "Executing: %s\n" "${genloc_run_cmd}";
+  printf "Executing: %s > %s\n" "${genloc_run_cmd}" "${genloc_output_file}";
 
 fi
 
@@ -287,6 +305,6 @@ ${genloc_run_cmd};
 
 fi
 
-# echo "${genloc_run_cmd}";
+echo "dmap_run_genloc.sh run complete";
 
 exit 0;

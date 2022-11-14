@@ -61,6 +61,7 @@ if [[ $verbose == "yes" ]]; then
 printf "                    DMAP\n";
 printf "       Differential Methylation Analysis Package\n";
 printf "Running differential methylation analysis on mapped reads\n\n";
+printf "\n  Working in dir: '%s'\n" "$PWD";
 printf "  Basic parameters from '%s'\n" "$1";
 printf "  Sample parameters from '%s'\n" "$2";
 
@@ -182,6 +183,9 @@ case $diffmeth_run_type in
        fileoption="-S";
      done
 
+    if [[ $verbose == "yes" ]]; then
+      printf "\n";
+    fi
     dmeth_cmd="${dmeth_cmd}"" > ${diffmeth_out_name}";
 
   fi
@@ -320,16 +324,25 @@ METHPROPS2FOLD
 ;;
 
   CpGlist)
-# need a valid input bam/sam file
-    if [[ -z "${file_list1[0]}" ]]; then
-      printf "%s operation needs a 'file_list1[0]'\n" ${diffmeth_run_type};
+# need at lease one valid input bam/sam file
+    if [[ ${#file_list1[@]} < 2 ]]; then
+      printf "%s operation needs at lease one 'file_list1[0]'\n" ${diffmeth_run_type};
       exit 1;
     else
       if [[ $verbose == "yes" ]]; then
-        printf " listing CpGs for '%s'\n" "${file_list1[0]}";
+        printf " listing CpGs for";
       fi
       dmeth_cmd="${path_to_dmap}""diffmeth -G ""${dmap_chr_info_file}""${diffmeth_run_options}"" -E ""$diffmeth_fragment_min"",""$diffmeth_fragment_max";
-      append_sam_or_bam "-R" "${file_list1[0]}";
+      for file in "${file_list1[@]}"
+        do
+        if [[ $verbose == "yes" ]]; then
+          printf " '%s'" "$file";
+        fi
+        append_sam_or_bam "-R" "$file";
+        done
+      if [[ $verbose == "yes" ]]; then
+        printf "\n";
+      fi
       dmeth_cmd="${dmeth_cmd}"" > ${diffmeth_out_name}";
     fi
 ;;
@@ -346,6 +359,51 @@ METHPROPS2FOLD
       dmeth_cmd="${path_to_dmap}""diffmeth -G ""${dmap_chr_info_file}""${diffmeth_run_options}"" -L ""$diffmeth_fragment_min"",""$diffmeth_fragment_max";
       append_sam_or_bam "-R" "${file_list1[0]}";
       dmeth_cmd="${dmeth_cmd}"" > ${diffmeth_out_name}";
+    fi
+;;
+
+  binlist_pc)
+# need a valid input bam/sam file
+    if [[ -z "${file_list1[0]}" ]]; then
+      printf "%s operation needs a 'file_list1[0]'\n" ${diffmeth_run_type};
+      exit 1;
+    else
+      if [[ $verbose == "yes" ]]; then
+        printf " listing CpGs for '%s'\n" "${file_list1[0]}";
+      fi
+# need to create the % producing script
+
+cat << 'PC_APPEND_SCRIPT' > generate_diffmeth_percents.awk
+# generate_diffmeth_percents.awk: script to take the -L or -l output from diffmeth
+# and append the %methylation to each fragment/region.
+#
+# usage:
+#   awk -f generate_diffmeth_percents.awk <diffmeth_output_file>
+#
+# or pipe the diffmeth output directly into awk -f generate_diffmeth_percents.awk
+#
+# Peter Stockwell 23-Aug-2022
+#
+
+NR==1{for(i=1;i<NF;i++)
+  printf("%s\t",$i);
+  printf("%%Meth\n");
+  }
+NR>1{split($6,s6,"/");
+  meth=substr(s6[1],1,length(s6[1])-1)+0;
+  umeth=substr(s6[2],1,length(s6[2])-1)+0;
+  if(meth>0||umeth>0)
+    printf("%s\t%.2f\n",$0,meth*100/(meth+umeth));
+  else
+    printf("%s\t-\n",$0);
+  }
+
+PC_APPEND_SCRIPT
+
+
+      dmeth_cmd="${path_to_dmap}""diffmeth -G ""${dmap_chr_info_file}""${diffmeth_run_options}"" -L ""$diffmeth_fragment_min"",""$diffmeth_fragment_max";
+      append_sam_or_bam "-R" "${file_list1[0]}";
+      dmeth_cmd="${dmeth_cmd}"" | awk -f generate_diffmeth_percents.awk > ${diffmeth_out_name}";
     fi
 ;;
 
