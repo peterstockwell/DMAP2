@@ -47,7 +47,6 @@ DMAP2_UserGuide.pdf - documentation
 Scripts - directory containing the main DMAP2 scripts
 Example_params - directory containing example parameter scripts for
                    the various steps
-Extra_scripts - directory containing some other useful script
 ```
 The Scripts directory contains:
 ```
@@ -63,26 +62,26 @@ dmap_basic_params.sh - to provide basic project details to all the
 ```
 The Example_params directory contains:
 ```
-sample_params.sh - typical sample parameters for the mapping step for
+sample_params.conf - typical sample parameters for the mapping step for
                      map_bisulphite_reads.sh
-dmap_anova2_params.sh - parameters for diffmeth with 2 group Anova
+dmap_anova2_params.conf - parameters for diffmeth with 2 group Anova
                      statistic
-dmap_anova3_params.sh - for 3 group Anova statistic
-dmap_chisq_params.sh - for differential methylation analysis by Chi
+dmap_anova3_params.conf - for 3 group Anova statistic
+dmap_chisq_params.conf - for differential methylation analysis by Chi
                      Square statistic
-dmap_prwise_params.sh - for Fisher's Exact pairwise analysis
-dmap_cpglist_params.sh - list CpG counts and positions for a single
+dmap_prwise_params.conf - for Fisher's Exact pairwise analysis
+dmap_cpglist_params.conf - list CpG counts and positions for a single
                      sample for each fragment or region
-dmap_binlist_params.sh - list methylation counts for a single sample
+dmap_binlist_params.conf - list methylation counts for a single sample
                      for each fragment or bin
-genloc_params.sh - parameters for identgeneloc to relate
+genloc_params.conf - parameters for identgeneloc to relate
                      fragments/regions to genomic features
 
 And parameter files for SRA examples:
 
-srr18283145_sample_params.sh		- mapping parameters for SRR18283145.
-srr_145_146_diffmeth_pairwise.sh	- parameters for pairwise diffmeth run.
-srr_145_146_genloc_params.sh		- parameters for identgeneloc on diffmeth output
+srr18283145_sample_params.conf		- mapping parameters for SRR18283145.
+srr_145_146_diffmeth_pairwise.conf	- parameters for pairwise diffmeth run.
+srr_145_146_genloc_params.conf		- parameters for identgeneloc on diffmeth output
 ```
 The Extra_scripts directory contains:
 ```

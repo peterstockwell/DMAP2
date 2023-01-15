@@ -77,9 +77,19 @@ esac
 
 fi
 
-# create the contaminant file for adaptor trimming, if it doesn't exist already:
+# Check if a contaminant file is defined, use it if so,
+# otherwise create the defaut contaminant file for adaptor trimming,
+#if it doesn't exist already:
 
-if [[ ! -f "contam.fa" ]]; then
+if [[ ! -z "${user_contam_file}" ]]; then
+
+  contam_file_name="${user_contam_file}";
+
+else
+
+  contam_file_name="contam.fa";
+
+  if [[ ! -f "contam.fa" ]]; then
 
 cat << CONTAM.FA > contam.fa
 >contam|SingleEndAdapter1
@@ -402,6 +412,8 @@ CTGTCTCTTATACACATCTCCGAGCCCACGAGAC
 AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTA
 CONTAM.FA
 
+  fi
+
 fi
 
 # adaptor trimming with cleanadaptors:  Set hard trim if required
@@ -490,7 +502,7 @@ printf "Paired end adaptor trimming to '%s' and '%s'\n" "${read_out_name[0]}" "$
 
 fi
 
-trim_command="${path_to_dmap}""cleanadaptors -I contam.fa ""${sample_trim}""${trim_back}""${min_length}""${comp_option[0]}""-F ""${dmap_sample_files[0]}"" ${comp_option[1]}""-G ""${dmap_sample_files[1]}"" -Z -o ""${read_out_name[0]}"" -O ""${read_out_name[1]}";
+trim_command="${path_to_dmap}""cleanadaptors -I ""${contam_file_name}"" ""${sample_trim}""${trim_back}""${min_length}""${comp_option[0]}""-F ""${dmap_sample_files[0]}"" ${comp_option[1]}""-G ""${dmap_sample_files[1]}"" -Z -o ""${read_out_name[0]}"" -O ""${read_out_name[1]}";
 
 bismark_options=(
 "-1 ""${read_out_name[0]}"
@@ -514,7 +526,7 @@ printf "Single ended adaptor trimming to '%s'\n" "${read_out_name[0]}";
 
 fi
 
-trim_command="${path_to_dmap}""cleanadaptors -I contam.fa ""${sample_trim}""${trim_back}""${min_length}""${comp_option[0]}""-F ""${dmap_sample_files[0]}"" -Z -o ""${read_out_name[0]}";
+trim_command="${path_to_dmap}""cleanadaptors -I ""${contam_file_name}"" ""${sample_trim}""${trim_back}""${min_length}""${comp_option[0]}""-F ""${dmap_sample_files[0]}"" -Z -o ""${read_out_name[0]}";
 
 bismark_options=("${read_out_name[0]}" "");
 
