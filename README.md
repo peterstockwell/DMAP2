@@ -83,10 +83,5 @@ srr18283145_sample_params.conf		- mapping parameters for SRR18283145.
 srr_145_146_diffmeth_pairwise.conf	- parameters for pairwise diffmeth run.
 srr_145_146_genloc_params.conf		- parameters for identgeneloc on diffmeth output
 ```
-The Extra_scripts directory contains:
-```
-split_fasta.awk - to split multi entry fasta files into individual
-                    files
-```
 Documentation: in the file DMAP2_UserGuide.pdf and in comments in the
 script files.
