@@ -62,6 +62,8 @@ dmap_basic_params.sh - to provide basic project details to all the
 ```
 The Example_params directory contains:
 ```
+diffmeth_run_params.conf - diffmeth config file in DMAP2_UserGuide.pdf
+                             Appendix III
 sample_params.conf - typical sample parameters for the mapping step for
                      map_bisulphite_reads.sh
 dmap_anova2_params.conf - parameters for diffmeth with 2 group Anova
