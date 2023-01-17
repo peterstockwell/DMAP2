@@ -57,11 +57,11 @@ dmap_run_diffmeth.sh - to calculate differential methylation with the
                         DMAP program diffmeth
 dmap_run_genloc.sh - to relate sequence regions or fragments to
                         genomic features
-dmap_basic_params.sh - to provide basic project details to all the
-                        above scripts
 ```
 The Example_params directory contains:
 ```
+dmap_basic_params.conf - to provide basic project details to all the
+                           scripts in Scripts
 diffmeth_run_params.conf - diffmeth config file in DMAP2_UserGuide.pdf
                              Appendix III
 sample_params.conf - typical sample parameters for the mapping step for
