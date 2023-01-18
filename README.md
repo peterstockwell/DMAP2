@@ -5,7 +5,7 @@ methylation analysis package (https://github.com/peterstockwell/DMAP).
 
 DMAP operates as a series of steps:
 ```
-a. Genome preparation for bismark mapping
+a. Genome preparation for bismark and bsmapz mapping
 
 b. Adaptor trimming of bisulphite sequence reads for each sample
 
