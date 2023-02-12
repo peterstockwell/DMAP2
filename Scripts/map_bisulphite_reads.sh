@@ -595,11 +595,11 @@ BISMARKSTATS.AWK
 
 if [[ ${#dmap_sample_files[@]} -gt 1 ]]; then
 
-report_file_name="${adtrimmed_out_dir}""$(basename "${dmap_sample_files[0]}" "${read_trailer[0]}")""_at_bismark_bt2_PE_report.txt";
+report_file_name="${mapping_out_dir}""$(basename "${dmap_sample_files[0]}" "${read_trailer[0]}")""_at_bismark_bt2_PE_report.txt";
 
 else
 
-report_file_name="${adtrimmed_out_dir}""$(basename "${dmap_sample_files[0]}" "${read_trailer[0]}")""_at_bismark_bt2_SE_report.txt";
+report_file_name="${mapping_out_dir}""$(basename "${dmap_sample_files[0]}" "${read_trailer[0]}")""_at_bismark_bt2_SE_report.txt";
 
 fi
 
