@@ -78,6 +78,8 @@ dmap_binlist_params.conf - list methylation counts for a single sample
                      for each fragment or bin
 genloc_params.conf - parameters for identgeneloc to relate
                      fragments/regions to genomic features
+contam.fa - adaptor contaminant file as an example (it will be created
+	    	    by the mapping step anyhow)
 
 And parameter files for SRA examples:
 
