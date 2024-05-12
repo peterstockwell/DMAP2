@@ -83,6 +83,7 @@ contam.fa - adaptor contaminant file as an example (it will be created
 
 And parameter files for SRA examples:
 
+test_dmap_basic_params.conf		- basic parameters for test data runs
 srr18283145_sample_params.conf		- mapping parameters for SRR18283145.
 srr_145_146_diffmeth_pairwise.conf	- parameters for pairwise diffmeth run.
 srr_145_146_genloc_params.conf		- parameters for identgeneloc on diffmeth output
