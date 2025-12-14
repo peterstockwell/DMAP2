@@ -286,7 +286,7 @@ SPLIT_FASTA.AWK
 
 # create the multi_genome_dir if necessary
 
-  mkdir "${genome_multi_dir}";
+  mkdir -p "${genome_multi_dir}";
 
 # if genome files are compressed, need to uncompress them
 
