@@ -352,7 +352,16 @@ case $feature_annotation_type in
 # make awk script to do this
 
 cat << 'GET_SEQMONK_INFO' > get_seqmonk_info.awk
-{split($2,s2,":");printf("\"%s\"\t\"%s\"\n",s2[2],fullname);}
+# New version to work with SeqMonk annotations for GRCh38 v113
+
+$2~/standard/{split($2,s2,":");
+printf("\"%s\"\t\"%s\"\n",substr(s2[2],1,length(s2[2])-length("standard;")),fullname);}
+
+$2!~/standard/&&$2!~/chromosome/{split($2,s2,":");
+printf("\"%s\"\t\"%s\"\n",s2[2],fullname);}
+
+$2!~/standard/&&$2~/chromosome/{split($2,s2,":");
+printf("\"%s\"\t\"%s\"\n",s2[3],fullname);}
 GET_SEQMONK_INFO
 
         head -1 "${annot_path_and_file}" | awk -f get_seqmonk_info.awk fullname="${annot_path_and_file}" >> "${dmap_annot_info_file}";
