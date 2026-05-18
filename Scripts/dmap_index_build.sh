@@ -3,7 +3,9 @@
 # Plus other information files required for DMAP running.
 # Also generate annotation file information.
 # Peter Stockwell: Aug-2022
-
+#
+# modify to fix for SeqMonk annotation header file changes
+# Peter Stockwell: May-2026
 
 # needs a basic parameter file to specify positions of relevant
 # executables and genome files.
