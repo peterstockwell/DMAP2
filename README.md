@@ -7,7 +7,9 @@ DMAP operates as a series of steps:
 ```
 a. Genome preparation for bismark and bsmapz mapping
 
-b. Adaptor trimming of bisulphite sequence reads for each sample
+b. Adaptor trimming of bisulphite sequence reads for each sample:
+DMAP2 now includes the option for trimming with trim_galore or
+the DMAP cleanadaptors trimmer.
 
 c. Mapping reads for each sample to the genome with bismark producing
 .bam or .sam files
@@ -62,6 +64,7 @@ The Example_params directory contains:
 ```
 dmap_basic_params.conf - to provide basic project details to all the
                            scripts in Scripts
+dmap_basic_tg_params.conf - same as above but using trim_galore
 diffmeth_run_params.conf - diffmeth config file in DMAP2_UserGuide.pdf
                              Appendix III
 sample_params.conf - typical sample parameters for the mapping step for
