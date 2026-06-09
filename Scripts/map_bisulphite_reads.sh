@@ -1,7 +1,7 @@
 # map_bisulphite_reads.sh: script to adaptor trim one bisulphite
 # sample and run the bismark aligner on it.
 #
-# Peter Stockwell: Aug-2022
+# Peter Stockwell: Apr-2026  Now allows trim_galore as adaptor trimmer
 
 
 # needs a basic parameter file to specify positions of relevant
@@ -20,39 +20,26 @@ echo " 1. Name of basic parameter file";
 printf " 2. Name of sample parameter file\n";
 
 exit 1;
-
 fi
 
 # can we read this file?
 
 if [[ ! -f "$1" ]]; then
-
   printf "Can't read basic parameter file '%s'\n" "$1";
-
   exit 1;
-
 else
-
 # pick up definitions from parameter file
-
 . "$1";
-
 fi
 
 # check for sample parameter file ($2)
 
 if [[ ! -f "$2" ]]; then
-
   printf "Can't read sample parameter file '%s'\n" "$2";
-
   exit 1;
-
 else
-
 # pick up sample definitions
-
 . "$2";
-
 fi
 
 if [[ $verbose == "yes" ]]; then
@@ -73,25 +60,22 @@ case $bisulphite_mapper in
   printf "   BSMAPz mapping\n";
   ;;
 
+  *)
+  printf "Error: invalid bisulphite_mapper '%s'\n" $bisulphite_mapper
+  exit 1
+  ;;
 esac
 
 fi
 
-# Check if a contaminant file is defined, use it if so,
-# otherwise create the defaut contaminant file for adaptor trimming,
-#if it doesn't exist already:
+# define function to create adaptor contam file, if needed
 
-if [[ ! -z "${user_contam_file}" ]]; then
+make_contam_file(){
+# writes major set of adaptor sequences to a named file
 
-  contam_file_name="${user_contam_file}";
+local contam_file=$1
 
-else
-
-  contam_file_name="contam.fa";
-
-  if [[ ! -f "contam.fa" ]]; then
-
-cat << CONTAM.FA > contam.fa
+cat << CONTAM.FA > $contam_file
 >contam|SingleEndAdapter1
 ACACTCTTTCCCTACACGACGCTGTTCCATCT
 >contam|SingleEndAdapter2
@@ -411,138 +395,252 @@ CTGTCTCTTATACACATCTCCGAGCCCACGAGAC
 >TruSeq3_UniversalAdapter
 AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTA
 CONTAM.FA
+}
 
+# function to generate trimmed read trailer based on
+# file extension and trimmer
+
+generate_read_details(){
+# do we have .fastq.gz .fq.gz or .fastq or .fq?
+
+raw_read_name=$1
+trim_ad_string=$3
+
+if [[ ! -n "$2" ]]; then
+  printf "    need parameter 0 or 1 to generate_read_details\n"
+  exit 1
+fi
+if [[ "${raw_read_name}" == *.gz ]]; then
+  cleanad_outcomp["$2"]=" -z"
+  cleanad_incomp["$2"]=" -z"
+  trim_galore_comp=" --gzip"
+else
+  cleanad_outcomp["$2"]=" -Z"
+  cleanad_incomp["$2"]=" -Z"
+  trim_galore_comp=""
+fi
+case $adapt_trimmer in
+  cleanadaptors)
+if [[ "${raw_read_name}" == *.fastq.gz ]]; then
+  read_trailer="${trim_ad_string}"".fastq.gz"
+else
+  if [[ "${raw_read_name}" == *.fq.gz ]]; then
+read_trailer="${trim_ad_string}"".fq.gz"
+  else
+    if [[ "${raw_read_name}" == *.fastq ]]; then
+      read_trailer="${trim_ad_string}"".fastq"
+    else
+      if [[ "${raw_read_name}" == *.fq ]]; then
+        read_trailer="${trim_ad_string}"".fq"
+      fi
+    fi
+  fi
+fi
+;;
+  trim_galore)
+# trim_galore only writes .fq or fq.gz files
+if [[ "${raw_read_name}" == *.gz ]]; then
+  read_trailer="${trim_ad_string}"".fq.gz"
+else
+  read_trailer="${trim_ad_string}"".fq"
+fi
+;;
+  *)
+;;
+esac
+read_out_basename["$2"]="$(basename ${raw_read_name} | cut -d. -f1)""${read_trailer}"
+}
+
+#check if adaptor trimmer is defined: default to cleanadaptors
+
+if [[ ${adapt_trimmer} == "" ]]; then
+  adapt_trimmer="cleanadaptors"
+  echo "Trimmer is '$adapt_trimmer' (default)"
+else
+  echo "Trimmer is '$adapt_trimmer'"
+fi
+
+case $adapt_trimmer in
+  trim_galore)
+#check we have the executable
+trim_galore_fullpath=$(command -v "trim_galore")
+
+if [[ ! -x ${trim_galore_fullpath} ]]; then
+  printf "Error: Can't find 'trim_galore' executable\n"
+  exit 1
   fi
 
-fi
-
-# adaptor trimming with cleanadaptors:  Set hard trim if required
-
-if [[ dmap_sample_trim_length -gt 0 ]]; then
-
-sample_trim="-l ""${dmap_sample_trim_length}"" ";
-
-else
-
-sample_trim="";
-
-fi
+trim_command="${trim_galore_fullpath} "
 
 if [[ $dmap_run_type == "RRBS" ]]; then
-
-trim_back="-t 3 ";
-
-else
-
-trim_back="";
-
+trim_command+="--rrbs "
 fi
 
-if [[ dmap_min_read_length -gt 0 ]]; then
-
-min_length="-x ""${dmap_min_read_length}"" ";
-
-else
-
-min_length="";
-
+if [[ $user_contam_file != "" ]]; then
+trim_command+="-a ""${user_contam_file}"" "
 fi
 
-# is read 1 file compressed?
-
-printf "R1 sample is: '%s'\n" "${dmap_sample_files[0]}";
-
-if [[ "${dmap_sample_files[0]}" == *fastq.gz ]]; then
-
-comp_option=("-z ");
-read_trailer=(".fastq.gz");
-
-else
-
-comp_option=("-Z ");
-read_trailer=(".fastq");
-
+if [[  dmap_min_read_length -gt 0 ]]; then
+trim_command+="--length ""$dmap_min_read_length"" "
 fi
 
-# generate trimmed name for read1
+if [[ adtrimmed_out_dir != "" ]]; then
+trim_command+="--output_dir ""$adtrimmed_out_dir"" "
+fi
 
-read_out_name=(
-"${adtrimmed_out_dir}""$(basename "${dmap_sample_files[0]}" "${read_trailer[0]}")""_at.fastq"
-)
+# generate new output filenames for trim_galore
 
-printf "Trimming R1 to '%s'\n" "${read_out_name[0]}";
 
-# do we have paired-end data??
+# paired end?
 
 if [[ ${#dmap_sample_files[@]} -gt 1 ]]; then
 
 if [[ -f "${dmap_sample_files[1]}" ]]; then
 
-# paired end trim:
+# yep: paired end trim:
 
-# is read 2 file compressed?
+generate_read_details "${dmap_sample_files[0]}" 0 "_val_1"
+read_out_name=("${adtrimmed_out_dir}""${read_out_basename[0]}")
+generate_read_details "${dmap_sample_files[1]}" 1 "_val_2"
+read_out_name+=("${adtrimmed_out_dir}""${read_out_basename[1]}")
 
-if [[ "${dmap_sample_files[1]}" == *fastq.gz ]]; then
-
-comp_option+=("-z ");
-read_trailer+=(".fastq.gz");
-
-else
-
-comp_option+=("-Z ");
-read_trailer+=(".fastq");
-
-fi
-
-read_out_name+=("${adtrimmed_out_dir}""$(basename "${dmap_sample_files[1]}" "${read_trailer[1]}")""_at.fastq");
+trim_command+="--paired "
 
 if [[ $verbose == "yes" ]]; then
-
-printf "Paired end adaptor trimming to '%s' and '%s'\n" "${read_out_name[0]}" "${read_out_name[1]}";
-
+printf "Paired end adaptor trimming R1 '%s' to '%s'\n                        and R2 '%s' to '%s'\n" "${dmap_sample_files[0]}" "${read_out_name[0]}" \
+  "${dmap_sample_files[1]}" "${read_out_name[1]}";
 fi
-
-trim_command="${path_to_dmap}""cleanadaptors -I ""${contam_file_name}"" ""${sample_trim}""${trim_back}""${min_length}""${comp_option[0]}""-F ""${dmap_sample_files[0]}"" ${comp_option[1]}""-G ""${dmap_sample_files[1]}"" -Z -o ""${read_out_name[0]}"" -O ""${read_out_name[1]}";
 
 bismark_options=(
 "-1 ""${read_out_name[0]}"
-"-2 ""${read_out_name[1]}");
-
+"-2 ""${read_out_name[1]}")
 else
-
 printf "Can't open read 2 file '%s'\n" "${dmap_sample_files[1]}";
-
 exit 1;
-
 fi
 
 else
-
 # single ended trim
 
+generate_read_details "${dmap_sample_files[0]}" 0 "_trimmed"
+read_out_name=("${adtrimmed_out_dir}""${read_out_basename[0]}")
+
 if [[ $verbose == "yes" ]]; then
-
-printf "Single ended adaptor trimming to '%s'\n" "${read_out_name[0]}";
-
+printf "Single ended adaptor trimming '%s' to '%s'\n" "${dmap_sample_files[0]}" "${read_out_name[0]}";
 fi
-
-trim_command="${path_to_dmap}""cleanadaptors -I ""${contam_file_name}"" ""${sample_trim}""${trim_back}""${min_length}""${comp_option[0]}""-F ""${dmap_sample_files[0]}"" -Z -o ""${read_out_name[0]}";
 
 bismark_options=("${read_out_name[0]}" "");
 
 fi
 
+trim_command+="${trim_galore_comp}"
+
+# put filename(s) in
+
+for fname in "${dmap_sample_files[@]}"; do
+  trim_command+=" "$fname
+done
+
+;;
+  
+  cleanadaptors)
+
+# Check if a contaminant file is defined, use it if so,
+# otherwise create the default contaminant file for adaptor trimming,
+#if it doesn't exist already:
+
+if [[ ! -z "${user_contam_file}" ]]; then
+
+  contam_file_name="${user_contam_file}";
+
+else
+
+  contam_file_name="contam.fa";
+
+  if [[ ! -f "contam.fa" ]]; then
+
+  make_contam_file $contam_file_name
+
+  fi
+
+fi
+
+generate_read_details "${dmap_sample_files[0]}" 0 "_at"
+read_out_name=("${adtrimmed_out_dir}""${read_out_basename[0]}")
+
+# adaptor trimming with cleanadaptors:  Set hard trim if required
+
+if [[ dmap_sample_trim_length -gt 0 ]]; then
+  sample_trim="-l ""${dmap_sample_trim_length}"" ";
+else
+  sample_trim="";
+fi
+
+if [[ $dmap_run_type == "RRBS" ]]; then
+  trim_back="-t 3 ";
+else
+  trim_back="";
+fi
+
+if [[ dmap_min_read_length -gt 0 ]]; then
+  min_length="-x ""${dmap_min_read_length}"" ";
+else
+  min_length="";
+fi
+
+trim_command="${path_to_dmap}""cleanadaptors -I ""${contam_file_name}"" ""${sample_trim}""${trim_back}""${min_length}"
+trim_command+="${cleanad_incomp}"" -F ""${dmap_sample_files[0]}""${cleanad_outcomp[0]}"" -o ""${read_out_name[0]}";
+
+# do we have paired-end data??
+
+if [[ ! ${#dmap_sample_files[@]} -gt 1 ]]; then
+  if [[ $verbose == "yes" ]]; then
+  printf "Single ended adaptor trimming '%s' to '%s'\n" "${dmap_sample_files[0]}" "${read_out_name[0]}";
+  fi
+bismark_options=("${read_out_name[0]}" "");
+
+else  # paired end
+
+if [[ -f "${dmap_sample_files[1]}" ]]; then
+
+# paired end trim:
+
+generate_read_details "${dmap_sample_files[1]}" 1 "_at"
+read_out_name+=("${adtrimmed_out_dir}""${read_out_basename[1]}")
+
 if [[ $verbose == "yes" ]]; then
+printf "Paired end adaptor trimming R1 '%s' to '%s'\n                        and R2 '%s' to '%s'\n" "${dmap_sample_files[0]}" "${read_out_name[0]}" "${dmap_sample_files[1]}" "${read_out_name[1]}"
+fi
 
-printf "Executing: %s\n" "${trim_command}";
+trim_command+="${cleanad_incomp[1]}"" -G ""${dmap_sample_files[1]}""${cleanad_outcomp[1]}"" -O ""${read_out_name[1]}"
 
+bismark_options=(
+"-1 ""${read_out_name[0]}"
+"-2 ""${read_out_name[1]}")
+
+else
+printf "Can't open read 2 file '%s'\n" "${dmap_sample_files[1]}"
+exit 1
+fi
+fi
+  ;;
+
+  *)
+  printf "  Invalid adaptor trimmer: '%s', should be 'cleanadaptors' or 'trim_galore'\n" "$adapt_trimmer"
+  exit 1
+  ;;
+
+esac
+
+if [[ $verbose == "yes" ]]; then
+printf "Executing: %s\n" "${trim_command}"
 fi
 
 eval "${trim_command}";
 
 # check the mapping output dir exists
 
-mkdir -p "${mapping_out_dir}";
+mkdir -p "${mapping_out_dir}"
 
 case $bisulphite_mapper in
 
@@ -550,24 +648,17 @@ case $bisulphite_mapper in
 
 # we need to run bismark on the adaptor trimmed file(s)
 
-# create 'unique' name for bismark command file:
-
-# bismark_cmd_file="${adtrimmed_out_dir}""$(basename "${dmap_sample_files[0]}" "${read_trailer[0]}")""_bismark_cmd.sh";
-
 bismark_cmd="${dmap_path_to_bismark_exes}""bismark ""${dmap_bismark_index_location}"" -o ""${mapping_out_dir}"" ""${bismark_run_options}"" ""${bismark_options[0]}"" ""${bismark_options[1]}";
 
 if [[ $verbose == "yes" ]]; then
-
-    printf "Executing: %s\n" "${bismark_cmd}";
-
+  printf "Executing: %s\n" "${bismark_cmd}"
 fi
 
-eval "${bismark_cmd}";
+eval "${bismark_cmd}"
 
 # if verbose, then run check on mapping stats:
 
 if [[ $verbose == "yes" ]]; then
-
 # make the awk script
 
 cat << 'BISMARKSTATS.AWK'  > bismark_stats.awk
@@ -594,17 +685,13 @@ $0~/C methylated in CHH context:/{printf("%s\n",$NF);}
 BISMARKSTATS.AWK
 
 if [[ ${#dmap_sample_files[@]} -gt 1 ]]; then
-
-report_file_name="${mapping_out_dir}""$(basename "${dmap_sample_files[0]}" "${read_trailer[0]}")""_at_bismark_bt2_PE_report.txt";
-
+  report_file_name="${mapping_out_dir}""$(basename "${read_out_name[0]}" | cut -d. -f1)""_bismark_bt2_PE_report.txt";
 else
-
-report_file_name="${mapping_out_dir}""$(basename "${dmap_sample_files[0]}" "${read_trailer[0]}")""_at_bismark_bt2_SE_report.txt";
-
+  report_file_name="${mapping_out_dir}""$(basename "${read_out_name[0]}" | cut -d. -f1)""_bismark_bt2_SE_report.txt";
 fi
 
 # generate the report
-
+echo "Bismark Mapping Statistics:"
 awk -f bismark_stats.awk "${report_file_name}"
 
 printf "bismark mapping completed\n";
