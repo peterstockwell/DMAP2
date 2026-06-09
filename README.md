@@ -11,8 +11,8 @@ b. Adaptor trimming of bisulphite sequence reads for each sample:
 DMAP2 now includes the option for trimming with trim_galore or
 the DMAP cleanadaptors trimmer.
 
-c. Mapping reads for each sample to the genome with bismark producing
-.bam or .sam files
+c. Mapping reads for each sample to the genome with bismark or bsmapz
+producing .bam or .sam files
 
 d. Comparing mapped data with the DMAP program diffmeth
 
@@ -25,9 +25,9 @@ variables to control the analysis.
 If prior work has already performed some steps (genome preparation,
 mapping) then those can be omitted and appropriate information put in
 the basic parameter file.  While the mapping scripts are based on
-using the bismark bisulphite aligner, other aligners can be used
-(e.g. bsmap) in which case they can be processed from the diffmeth
-point at step (d).
+using the bismark or bsmapz bisulphite aligners, other aligners can be
+used in which case they can be processed from the diffmeth point at
+step (d).
 
 Platforms: both DMAP and DMAP2 have been developed and tested in MacOS
 X and RH Linux environments.  DMAP is written in C and should compile
